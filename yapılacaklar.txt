@@ -1,0 +1,4 @@
+->İlk önce get isteği ile hashlanmiş şifreyi aldık.
+->sonra belli bir thread sayısı ve demon thread ile kontrol olsun.
+->threadler random şifre üreticek onu hashlicek.
+->sonra karşılaştırıcak, eşitse api isteğini yollayıp kontrol edicek.
