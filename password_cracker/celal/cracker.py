@@ -13,7 +13,21 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-    
+class PasswordControllerThread(threading.Thread):
+    def __init__(session:aiohttp.ClientSession,
+                 base_url:str,
+                 endpoint:str,
+                 password):#password is a tuple of (password,hash) we need to send hash
+        pass ## TODO: implement constructor
+    #bunu neden kullandım belki asenkron bir thread ile local olarak kontrol etmek hızlı olabilir emin değilim
+
+        
+    async def check_password_using_api(session:aiohttp.ClientSession,base_url:str,endpoint:str,password)->str:
+        async with session.post(base_url + endpoint, json={"password": password}) as response:
+            message = await response.json()
+            return message.get("message")
+
+
 class PasswordCrackerThread(threading.Thread):
     def __init__(self, 
                  password_length:int,
@@ -25,7 +39,9 @@ class PasswordCrackerThread(threading.Thread):
     
     @staticmethod
     @jit(nopython=True,nogil=True)
-    def brute_force_password(characters: str, password_length: int):
+    def brute_force_password(characters: str, password_length: int): 
+        #beklediğim gibi çalışıyor bu method a*password_length - 9*password_length a kadar çalışıyor
+        #kombinasyonları getiriyor atomik olarak burayı çektim
         results = []
         total_combinations = len(characters) ** password_length
         for i in range(total_combinations):
@@ -45,6 +61,7 @@ class PasswordCrackerThread(threading.Thread):
 
     def join(self):
         super().join()
+        #burası yarım ne yazacam bilemdim
     
     
 
@@ -65,28 +82,32 @@ class PasswordCrackerDaemon(threading.Thread):
         self.get_endpoint = get_endpoint
         self.post_endpoint = post_endpoint
         self.chunk_size = chunk_size
+        self.passwords = []
 
     async def start_cracking(self,session:aiohttp.ClientSession):
         for length in range(self.min_password_length,self.max_password_length+1):
             logging.info(f"Starting to crack passwords of length {length}")
-            cracker_thread = PasswordCrackerThread(length,self.characters)
-
-            if len(password_tuples) <= self.chunk_size:
-                message = await self.check_password_using_api(session,cracker_thread.password_tuples)
-                logging.info(message)
-                if message == "Success":
-                    break
+            cracker_threads = []
+            for i in range(self.min_password_length,self.max_password_length):
+                cracker_threads.append(PasswordCrackerThread(i,self.characters))
+            
+            for thread in cracker_threads:
+                thread.start()
+            
+            for thread in cracker_threads:
+                thread.join()
+            
+            for thread in cracker_threads:
+                self.passwords += thread.password_tuples
+            
+            logging.info(f"Finished cracking passwords of length {length}")
+            #burası yarım daha kafamda kuramadım belki kontrol etmeyi async thread yapabiliriz 
             
 
     async def get_password_from_api(session:aiohttp.ClientSession,base_url:str,endpoint:str)->str:
         async with session.get(base_url + endpoint) as response:
             password = await response.json()
             return password.get("password")
-    
-    async def check_password_using_api(session:aiohttp.ClientSession,base_url:str,endpoint:str,password:str)->str:
-        async with session.post(base_url + endpoint, json={"password": password}) as response:
-            message = await response.json()
-            return message.get("message")
     
 
     def run(self):
