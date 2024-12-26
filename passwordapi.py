@@ -10,17 +10,17 @@ app = Flask(__name__)
 
 def generate_password():
     password = "".join(
-        random.choices(string.ascii_letters + string.digits, k=random.randint(8, 16))
+        random.choices( string.digits, k=11)
     )
-    return hashlib.md5(password.encode()).hexdigest()
+    return hashlib.md5(password.encode()).hexdigest(),password
 
 
 @app.route("/get_password", methods=["GET"])
 def get_password():
-    password = generate_password()
+    password,target = generate_password()
     response = jsonify({"password": password})
     with open("password.json", "w") as f:
-        json.dump({"password": password}, f)
+        json.dump({"password": password , "target":target}, f)
     return response
 
 
