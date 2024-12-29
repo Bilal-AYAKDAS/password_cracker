@@ -18,10 +18,10 @@ def generate_password():
 
 @app.route("/get_password", methods=["GET"])
 def get_password():
-    password = generate_password()
+    password,target = generate_password()
     response = jsonify({"password": password})
     with open("password.json", "w") as f:
-        json.dump({"password": password}, f)
+        json.dump({"password": password , "target":target}, f)
     return response
 
 
