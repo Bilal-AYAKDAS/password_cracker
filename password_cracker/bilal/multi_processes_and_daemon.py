@@ -10,8 +10,8 @@ import aiohttp
 
 BASE_URL = "http://127.0.0.1:5000"
 
-PASSWORD_MIN_LENGTH = 6
-PASSWORD_MAX_LENGTH = 7
+PASSWORD_MIN_LENGTH = 1
+PASSWORD_MAX_LENGTH = 6
 TIMEOUT = 5
 MAX_RETRIES = 3
 
@@ -49,7 +49,7 @@ def generate_password_for_workers(api_passwd, queue, stop_event):
     while not stop_event.is_set():
         i += 1
         # Rastgele bir şifre oluştur
-        password = "".join(random.choices(string.digits, k=random.randint(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)))
+        password = "".join(random.choices(string.ascii_lowercase + " ", k=random.randint(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)))
         # Şifreyi hash'le
         hashed_passwd = hashlib.md5(password.encode()).hexdigest()
         # Hash'ler eşleşirse doğru şifreyi bulduk
@@ -67,7 +67,7 @@ async def daemon_task(queue, stop_event):
     """
     while not stop_event.is_set():
         # Rastgele bir şifre oluştur
-        password = "".join(random.choices(string.digits, k=random.randint(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)))
+        password = "".join(random.choices(string.ascii_lowercase+" ", k=random.randint(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)))
         print(f"Daemon sending password: {password}")
 
         try:
